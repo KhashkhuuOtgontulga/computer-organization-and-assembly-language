@@ -1,0 +1,13 @@
+// Symbol table
+// Scope level 0:
+//	Symbol Name       Page Address
+//	----------------  ------------
+//	START             3000
+//	POLY              3018
+//	X_1               301B
+//	Y_1               301C
+//	MULT              301D
+//	NEGATE            3022
+//	LOOP              3026
+//	DONE              302A
+

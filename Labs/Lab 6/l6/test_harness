@@ -1,0 +1,127 @@
+#!/usr/bin/perl -w
+#
+#
+# Kyle C. Hale (c) 2017
+# This is a test harness for IIT CS 350 Spring 17 labs
+#
+#
+use strict;
+use Term::ANSIColor;
+
+scalar(@ARGV) == 3 or die usage();
+
+# Get Debugging output?
+my $DEBUG = 0;
+# Get verbose output?
+my $VERBOSE = 0;
+my $progname = shift;
+my $testdir = shift;
+my $soln = shift;
+
+
+my @files = grep {/\.sdc$/} <$testdir/*>;
+
+my $ntests = 0;
+my $passcnt = 0;
+
+sub testit {
+    my $cmd = shift;
+    my $expect = shift;
+    my $testnum = shift;
+
+    print "Test $testnum - ";
+
+    my $output = (`$cmd`);
+    chomp $output;
+
+    if ($output eq $expect) {
+        print color('bold green');
+        print "[PASS] ";
+        print color('reset');
+        print "\n";
+        return 1;
+    } else {
+        print color('bold red');
+        print "[FAIL] ";
+        print color('reset');
+        print "\n";
+        return 0;
+    }
+
+    return 0;
+}
+
+print "# Testing $progname...\n";
+
+# test failure mode for bad file provided
+my $str = "expect -f tests/t0.exp $progname 2>/dev/null";
+my $expect = `expect -f tests/t0.exp $soln 2>/dev/null`;
+chomp $expect;
+my $tn = $ntests;
+
+$ntests += 1;
+
+if (testit($str, $expect, $tn) == 1) {
+    $passcnt += 1;
+}
+
+my @sfiles = sort { ($a =~ /(\d+)/)[0] <=> ($b =~ /(\d+)/)[0] }  @files;
+
+foreach my $file (@sfiles) {
+
+    # ignore . and ..
+    next if $file =~ /^\.\.?$/;
+
+	my $tnum = ($file =~ /(\d+).sdc/)[0];
+    my $cmd1 = "expect -f tests/t" . $tnum . ".exp $progname 2>/dev/null";
+    my $cmd2 = "expect -f tests/t" . $tnum . ".exp $soln 2>/dev/null";
+
+    my @o1 = (`$cmd1`);
+    my @o2 = (`$cmd2`);
+
+    print "Test $ntests - ";
+
+    if ($DEBUG==1) {
+        print "running '$cmd1' on file $file\n";
+        print "running '$cmd2' on file $file\n";
+        print @o1;
+        print @o2;
+    }
+
+    my $same = 1;
+
+    while (@o2) {
+
+        my $i = shift @o1;
+        my $j = shift @o2;
+        if (defined $i) {
+            chomp $i;
+        }
+        if (defined $j) {
+            chomp $j;
+        }
+        if (not defined $i or $i ne $j) {
+            print color('bold red');
+            print "[FAIL] ";
+            $same = 0;
+            last;
+        }
+    }
+
+    if ($same == 1) {
+        print color('bold green');
+        print "[PASS] ";
+        $passcnt += 1;
+    }
+
+    print color('reset');
+    print "\n";
+    $ntests += 1;
+}
+
+my $grade = $passcnt/$ntests;
+print "$passcnt out of $ntests test cases passed\n";
+
+sub usage {
+	print "\nUsage: $0 <student-binary> <test-case-dir> <soln-binary>\n\n";
+}
